@@ -1,13 +1,13 @@
-# Run Data Pipelines with Temporal
+# Run data pipelines with Temporal
 
-Temporal makes writing Data Pipelines easy with Workflows and Activities.
+Temporal makes writing data pipelines easy with Workflows and Activities.
 
 You can create a source, process the step or steps, and output the flow of information to a destination with just code. Meaning all of your developer best practices can be implemented, tested, and ran as needed.
 
 That data that enters a Workflow is handled by Activities, while the Workflow orchestrates the execution of those steps.
 You can ensure that Temporal handles all actions and executes it observably once, all in Python code.
 
-In this tutorial, you'll learn to build a Data Pipeline that gets the top 10 Hacker New stories and processes the items based on the story ID.
+In this tutorial, you'll learn to build a data pipeline that gets the top 10 Hacker New stories and processes the items based on the story ID.
 If the API endpoint is down, the default behavior of the Retry Policy is to retry indefinitely.
 
 ## Step 0: Prerequisites
@@ -63,7 +63,7 @@ The `async def run()` function is decorated with the `@workflow.run` which is se
 There are two Activities being executed, `hackernews_top_story_ids` and `hackernews_top_stories`.
 These Activities are defined in the `activities.py` file, which will be explained later.
 
-Inside the `workflow.execute_activity()` function, you're passing the name of the Activity, function, or step in your Data Pipeline.
+Inside the `workflow.execute_activity()` function, you're passing the name of the Activity, function, or step in your data pipeline.
 If that step takes an argument, then use the second positional argument for that name, as shown in the second `execute_activity()` function.
 
 You must set a Workflow timeout, which controls the maximum duration of a different aspect of a Workflow Execution, such policies include:
@@ -125,7 +125,7 @@ Maximum Attempts     = ∞
 Non-Retryable Errors = []
 ```
 
-The last step of the Data Pipeline returns the results.
+The last step of the data pipeline returns the results.
 
 ## Step 3: Run your Workflow
 
@@ -232,18 +232,18 @@ Now go to your running instance of the [Temporal Web UI](http://localhost:8233/n
 
 1. Select the most recently running Workflow by Workflow ID, for example `hackernews-workflow`.
 2. Open the **Input and results** pane to see what was entered and returned to the Workflow.
-3. Under **Recent Events,** you can observe every step and task created by the Data Pipeline.
-    This information is persisted in History, meaning that if any point a failure is created in your Data Pipeline, you can resume from that point in the history, rather than starting over from the beginning.
+3. Under **Recent Events,** you can observe every step and task created by the data pipeline.
+    This information is persisted in History, meaning that if any point a failure is created in your data pipeline, you can resume from that point in the history, rather than starting over from the beginning.
 
 ## Conclusion
 
-You have learned how to create and process data with a Data Pipeline that's durably backed by Temporal.
+You have learned how to create and process data with a data pipeline that's durably backed by Temporal.
 
-With Temporal, you have insight into your Data Pipelines. You can see every point in History and have the ability to resume from a failure or retry.
+With Temporal, you have insight into your data pipelines. You can see every point in History and have the ability to resume from a failure or retry.
 
 ### Next steps
 
-Now on your own, write another Activity, or step in your Data Pipeline, that extracts the most frequently occurring words or topics in the story title.
+Now on your own, write another Activity, or step in your data pipeline, that extracts the most frequently occurring words or topics in the story title.
 
 * How do you tell the Worker to process that information?
 * How does the Workflow know to process that step?
