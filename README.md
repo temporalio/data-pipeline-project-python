@@ -31,7 +31,6 @@ Write a Workflow Definition file that contains the steps that you want to execut
 from datetime import timedelta
 
 from temporalio import workflow
-from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
     from activities import hackernews_top_stories, hackernews_top_story_ids
@@ -40,14 +39,10 @@ with workflow.unsafe.imports_passed_through():
 @workflow.defn
 class HackerNewsWorkflow:
     @workflow.run
-    async def run(self):
+    async def run(self) -> list:
         news_id = await workflow.execute_activity(
             hackernews_top_story_ids,
             start_to_close_timeout=timedelta(seconds=15),
-            retry_policy=RetryPolicy(
-                maximum_attempts=5,
-                non_retryable_error_types=["WorkflowFailureError"],
-            ),
         )
         return await workflow.execute_activity(
             hackernews_top_stories,
@@ -63,52 +58,57 @@ The `async def run()` function is decorated with the `@workflow.run` which is se
 There are two Activities being executed, `hackernews_top_story_ids` and `hackernews_top_stories`.
 These Activities are defined in the `activities.py` file, which will be explained later.
 
-Inside the `workflow.execute_activity()` function, you're passing the name of the Activity, function, or step in your data pipeline.
+Inside the `workflow.execute_activity()` function, pass the reference of Activity Definition, function, or step in your data pipeline.
 If that step takes an argument, then use the second positional argument for that name, as shown in the second `execute_activity()` function.
 
-You must set a Workflow timeout, which controls the maximum duration of a different aspect of a Workflow Execution, such policies include:
-
-* [Workflow Execution Timeout](https://docs.temporal.io/workflows#workflow-execution-timeout): restricts the maximum amount of time that a single Workflow Execution can be executed.
-* [Workflow Run Timeout](https://docs.temporal.io/workflows#workflow-run-timeout): restricts the maximum amount of time that a single Workflow Run can last.
-* [Workflow Task Timeout](https://docs.temporal.io/workflows#workflow-task-timeout): restricts the maximum amount of time that a Worker can execute a Workflow Task.
+You must set either a Start-To-Close or Schedule-To-Close Activity Timeout.
 
 ## Step 2: Activities
 
-In the `activities.py` file, you write out each step in the data processing pipeline.
+In the `activities.py` file, write out each step in the data processing pipeline.
 
 For example, `hackernews_top_story_ids()` gets the top 10 stories from Hacker News while, `hackernews_top_stories()` gets items based on the stories ID.
+
+Use the `aiohttp` library instead of `requests` to avoid making blocking calls.
 
 ```python
 # activities.py
 from dataclasses import dataclass
 
-import requests
+import aiohttp
 from temporalio import activity
 
 TASK_QUEUE_NAME = "hackernews-task-queue"
 
 
-@dataclass
-class HackerNewsTopStoryIds:
-    ids: list
+async def fetch(session, url):
+    async with session.get(url) as response:
+        return await response.json()
 
 
 @activity.defn
-async def hackernews_top_story_ids() -> list:
-    top_story_ids = requests.get(
-        "https://hacker-news.firebaseio.com/v0/topstories.json"
-    ).json()
+async def hackernews_top_story_ids() -> list[int]:
+    async with aiohttp.ClientSession() as session:
+        async with session.get(
+            "https://hacker-news.firebaseio.com/v0/topstories.json"
+        ) as response:
+            top_story_ids = await response.json()
     return top_story_ids[:10]
 
 
 @activity.defn
-async def hackernews_top_stories(hackernews_top_story_ids):
+async def hackernews_top_stories(hackernews_top_story_ids) -> list[list[str]]:
     results = []
-    for item_id in hackernews_top_story_ids:
-        item = requests.get(
-            f"https://hacker-news.firebaseio.com/v0/item/{item_id}.json"
-        ).json()
-        results.append([item["title"], item["by"], item["url"]])
+    async with aiohttp.ClientSession() as session:
+        for item_id in hackernews_top_story_ids:
+            try:
+                item = await fetch(
+                    session,
+                    f"https://hacker-news.firebaseio.com/v0/item/{item_id}.json",
+                )
+                results.append([item["title"], item["by"], item["url"]])
+            except KeyError:
+                print(f"Error processing item {item_id}: {item}")
     return results
 ```
 
@@ -127,48 +127,9 @@ Non-Retryable Errors = []
 
 The last step of the data pipeline returns the results.
 
-## Step 3: Run your Workflow
+## Step 3: Run Worker
 
-The file `run_workflow.py` processes the Execution of the Workflow.
-To start, you connect to an instance of the Temporal Client. Since it is running locally, it is connected to `localhost:7233`. 
-
-Then it executes the Workflow, by passing the name of the Workflow, a Workflow ID, and a Task Queue name.
-
-```python
-# run_workflow.py
-import asyncio
-
-import pandas as pd
-from temporalio.client import Client
-from activities import TASK_QUEUE_NAME
-from your_workflow import HackerNewsWorkflow
-
-
-async def main():
-    client = await Client.connect("localhost:7233")
-
-    data = await client.execute_workflow(
-        HackerNewsWorkflow.run,
-        id="hackernews-workflow",
-        task_queue=TASK_QUEUE_NAME,
-    )
-
-    df = pd.DataFrame(data)
-
-    print(df)
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
-```
-
-When the Workflow process it steps, it will finally return the `data` variable. For this example, `data` is processed by a Pandas Data frame.
-
-The code is run in the `asyncio` event loop.
-
-## Step 4: Run Worker
-
-Workers host the Workflows and/or Activities.
+In the `run_worker.py` file, set the Worker to host the Workflows and/or Activities.
 
 ```python
 # run_worker.py
@@ -199,7 +160,47 @@ if __name__ == "__main__":
 This Worker run creates and uses the same Client used for starting the Workflow, `localhost:7233`.
 The Worker must be set to the same Task Queue name, then specify your Workflows and Activities names in a list.
 
-Then Worker with the [asyncio.run()](https://docs.python.org/3/library/asyncio-runner.html#asyncio.run) function.
+Then run the Worker with the [asyncio.run()](https://docs.python.org/3/library/asyncio-runner.html#asyncio.run) function.
+
+## Step 4: Run your Workflow
+
+The file `run_workflow.py` processes the Execution of the Workflow.
+To start, you connect to an instance of the Temporal Client. Since it is running locally, it is connected to `localhost:7233`.
+
+Then it executes the Workflow, by passing the name of the Workflow, a Workflow ID, and a Task Queue name.
+
+```python
+# run_workflow.py
+import asyncio
+
+import pandas as pd
+from temporalio.client import Client
+
+from activities import TASK_QUEUE_NAME
+from your_workflow import HackerNewsWorkflow
+
+
+async def main():
+    client = await Client.connect("localhost:7233")
+
+    data = await client.execute_workflow(
+        HackerNewsWorkflow.run,
+        id="hackernews-workflow",
+        task_queue=TASK_QUEUE_NAME,
+    )
+
+    df = pd.DataFrame(data)
+    print(df)
+    return df
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+When the Workflow process it steps, it will finally return the `data` variable. For this example, `data` is processed by a Pandas Data frame.
+
+The code is run in the `asyncio` event loop.
 
 ## Step 5: Results
 
@@ -226,6 +227,7 @@ You should see something similar to the following in your terminal.
 7    Use Gröbner bases to solve polynomial equations  ...    https://jingnanshi.com/blog/groebner_basis.html
 8                        Eww: ElKowars wacky widgets  ...                     https://github.com/elkowar/eww
 9  FSF Call on the IRS to provide libre tax-filin...  ...  https://www.fsf.org/blogs/community/call-on-th...
+[10 rows x 3 columns]
 ```
 
 Now go to your running instance of the [Temporal Web UI](http://localhost:8233/namespaces/default/workflows), to see how the information is persisted in history.

@@ -18,8 +18,8 @@ async def main():
     )
 
     df = pd.DataFrame(data)
-
     print(df)
+    return df
 
 
 if __name__ == "__main__":

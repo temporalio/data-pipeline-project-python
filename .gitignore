@@ -1,1 +1,2 @@
-__pycahce__
+__pycahce__/*
+.mypy_cache/*
