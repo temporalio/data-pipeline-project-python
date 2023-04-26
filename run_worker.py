@@ -4,7 +4,7 @@ import asyncio
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from activities import TASK_QUEUE_NAME, hackernews_top_stories, hackernews_top_story_ids
+from activities import TASK_QUEUE_NAME, story_ids, top_stories
 from your_workflow import HackerNewsWorkflow
 
 
@@ -14,7 +14,7 @@ async def main():
         client,
         task_queue=TASK_QUEUE_NAME,
         workflows=[HackerNewsWorkflow],
-        activities=[hackernews_top_stories, hackernews_top_story_ids],
+        activities=[top_stories, story_ids],
     )
     await worker.run()
 

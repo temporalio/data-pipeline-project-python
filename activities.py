@@ -13,7 +13,7 @@ async def fetch(session, url):
 
 
 @activity.defn
-async def hackernews_top_story_ids() -> list[int]:
+async def story_ids() -> list[int]:
     async with aiohttp.ClientSession() as session:
         async with session.get(
             "https://hacker-news.firebaseio.com/v0/topstories.json"
@@ -23,10 +23,10 @@ async def hackernews_top_story_ids() -> list[int]:
 
 
 @activity.defn
-async def hackernews_top_stories(hackernews_top_story_ids) -> list[list[str]]:
+async def top_stories(story_ids) -> list[list[str]]:
     results = []
     async with aiohttp.ClientSession() as session:
-        for item_id in hackernews_top_story_ids:
+        for item_id in story_ids:
             try:
                 item = await fetch(
                     session,

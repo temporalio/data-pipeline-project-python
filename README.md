@@ -1,4 +1,4 @@
-# Run data pipelines with Temporal
+# Build a data pipeline Workflow with Temporal and Python
 
 Temporal makes writing data pipelines easy with Workflows and Activities.
 
@@ -9,6 +9,8 @@ You can ensure that Temporal handles all actions and executes it observably once
 
 In this tutorial, you'll learn to build a data pipeline that gets the top 10 Hacker New stories and processes the items based on the story ID.
 If the API endpoint is down, the default behavior of the Retry Policy is to retry indefinitely.
+
+You'll then implement a Schedule to Schedule Workflows on an interval to leverage the automation of running Workflow Executions.
 
 ## Step 0: Prerequisites
 
@@ -63,7 +65,12 @@ If that step takes an argument, then use the second positional argument for that
 
 You must set either a Start-To-Close or Schedule-To-Close Activity Timeout.
 
-## Step 2: Activities
+Now, write out the Activity.
+
+## Step 2: Write your Activities Definition
+
+Think of the Activities as steps in your data pipeline. Each Activity should handle some thing that you want executed.
+The Workflow will handle the execution of each step.
 
 In the `activities.py` file, write out each step in the data processing pipeline.
 
@@ -202,7 +209,7 @@ When the Workflow process it steps, it will finally return the `data` variable. 
 
 The code is run in the `asyncio` event loop.
 
-## Step 5: Results
+### Results
 
 To run your code, open two terminal windows and run the following:
 
@@ -237,11 +244,122 @@ Now go to your running instance of the [Temporal Web UI](http://localhost:8233/n
 3. Under **Recent Events,** you can observe every step and task created by the data pipeline.
     This information is persisted in History, meaning that if any point a failure is created in your data pipeline, you can resume from that point in the history, rather than starting over from the beginning.
 
+## Step 6: Schedule a Workflow
+
+We just demonstrated how to start a Worker and run a Workflow, which returns information from our data pipeline. What if we want to run this on a schedule?
+Historically, you could write a cron job and have that fire once a day, but cron jobs are fragile. They break easily and knowing when they go down or why they didn't fire can be frustrating.
+
+Temporal provides a Schedule Workflow, in which you can start, backfill, delete, describe, list, pause, trigger, and update as you would any other Workflow.
+
+Let's build a Schedule Workflow to fire once an hour and return the results of our `HackerNewsWorkflow`.
+
+Create a file called `schedule_workflow.py`.
+
+```python
+import asyncio
+from datetime import timedelta
+
+from temporalio.client import (
+    Client,
+    Schedule,
+    ScheduleActionStartWorkflow,
+    ScheduleIntervalSpec,
+    ScheduleSpec,
+    ScheduleState,
+)
+
+from activities import TASK_QUEUE_NAME
+from your_workflow import HackerNewsWorkflow
+
+
+async def main():
+    client = await Client.connect("localhost:7233")
+    await client.create_schedule(
+        "workflow-schedule-id",
+        Schedule(
+            action=ScheduleActionStartWorkflow(
+                HackerNewsWorkflow.run,
+                id="hackernews-workflow",
+                task_queue=TASK_QUEUE_NAME,
+            ),
+            spec=ScheduleSpec(
+                intervals=[ScheduleIntervalSpec(every=timedelta(hour=1))]
+            ),
+            state=ScheduleState(note="Getting top stories every hour."),
+        ),
+    )
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Set the `create_schedule()` function on the Client and pass a unique identifier for the Schedule.
+
+Then [Schedule](https://python.temporal.io/temporalio.client.Schedule.html) your Action.
+In this example, the Action specifies the Workflow run, `HackerNewsWorkflow`, the Workflow Id, `hackernews-workflow`, and the Task Queue name.
+
+Then in the [ScheduleSpec](https://python.temporal.io/temporalio.client.ScheduleSpec.html) set an interval timer, for example `every=timedelta(hour=1)`.
+
+:::note
+
+Modify the interval timer from `hours=1` to `minutes=1` to see the Schedule Workflow execute faster.
+
+:::
+
+### Run the Schedule
+
+Then run the following:
+
+```bash
+# terminal two
+poetry run python schedule_workflow.py
+```
+
+Now go to your running instance of the [Temporal Web UI](http://localhost:8233/).
+
+1. Select the **Schedules** from the left-hand navigation.
+2. Choose the Schedule and see a list of upcoming runs.
+
+After a few runs, you can see the **Recent Runs** fill up with previously run Workflows, or go back to the **Recent Workflows** page and see the Workflows populate there.
+
+### Delete the Schedule
+
+When you delete the Schedule, you're sending a termination Signal to the Schedule. 
+You can write code to give a condition to cancel the Schedule.
+
+```python
+import asyncio
+
+from temporalio.client import Client
+
+
+async def main():
+    client = await Client.connect("localhost:7233")
+    handle = client.get_schedule_handle(
+        "workflow-schedule-id",
+    )
+
+    await handle.delete()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+This sets the Schedule Id and then deletes the Schedule with the [delete()](https://python.temporal.io/temporalio.client.ScheduleHandle.html#delete) method on the handle.
+
+Alternatively, you can delete a Schedule with the CLI.
+
+```bash
+temporal schedule delete --schedule-id=workflow-schedule-id
+```
+
 ## Conclusion
 
-You have learned how to create and process data with a data pipeline that's durably backed by Temporal.
+You have learned how to create and process data with a data pipeline that's durably backed by Temporal and schedule a Workflow.
 
-With Temporal, you have insight into your data pipelines. You can see every point in History and have the ability to resume from a failure or retry.
+With Temporal, you have insight into your data pipelines. You can see every point in History and have the ability to resume from a failure or retry, and ensure that your Workflows execute on a scheduled interval.
 
 ### Next steps
 
