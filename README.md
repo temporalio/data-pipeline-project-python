@@ -24,7 +24,7 @@ With this repository cloned, run the following at the root of the directory:
 poetry install
 ```
 
-## Step 1: Workflow Definition
+## Step 1: Write your Workflow Definition
 
 Write a Workflow Definition file that contains the steps that you want to execute.
 
@@ -69,16 +69,17 @@ Now, write out the Activity.
 
 ## Step 2: Write your Activities Definition
 
-Think of the Activities as steps in your data pipeline. Each Activity should handle some thing that you want executed.
+Think of the Activities as steps in your data pipeline. Each Activity should handle something that you want executed.
 The Workflow will handle the execution of each step.
 
 In the `activities.py` file, write out each step in the data processing pipeline.
 
-For example, `hackernews_top_story_ids()` gets the top 10 stories from Hacker News while, `hackernews_top_stories()` gets items based on the stories ID.
+For example, `story_ids()` gets the top 10 stories from Hacker News while, `top_stories()` gets items based on the stories ID.
 
 Use the `aiohttp` library instead of `requests` to avoid making blocking calls.
 
 ```python
+# activities.py
 # activities.py
 from dataclasses import dataclass
 
@@ -94,7 +95,7 @@ async def fetch(session, url):
 
 
 @activity.defn
-async def hackernews_top_story_ids() -> list[int]:
+async def story_ids() -> list[int]:
     async with aiohttp.ClientSession() as session:
         async with session.get(
             "https://hacker-news.firebaseio.com/v0/topstories.json"
@@ -104,10 +105,10 @@ async def hackernews_top_story_ids() -> list[int]:
 
 
 @activity.defn
-async def hackernews_top_stories(hackernews_top_story_ids) -> list[list[str]]:
+async def top_stories(story_ids) -> list[list[str]]:
     results = []
     async with aiohttp.ClientSession() as session:
-        for item_id in hackernews_top_story_ids:
+        for item_id in story_ids:
             try:
                 item = await fetch(
                     session,
@@ -115,6 +116,7 @@ async def hackernews_top_stories(hackernews_top_story_ids) -> list[list[str]]:
                 )
                 results.append([item["title"], item["by"], item["url"]])
             except KeyError:
+                # For hiring posts where there is no URLs
                 print(f"Error processing item {item_id}: {item}")
     return results
 ```
@@ -256,6 +258,7 @@ Let's build a Schedule Workflow to fire once an hour and return the results of o
 Create a file called `schedule_workflow.py`.
 
 ```python
+# schedule_workflow.py
 import asyncio
 from datetime import timedelta
 
@@ -283,9 +286,9 @@ async def main():
                 task_queue=TASK_QUEUE_NAME,
             ),
             spec=ScheduleSpec(
-                intervals=[ScheduleIntervalSpec(every=timedelta(hour=1))]
+                intervals=[ScheduleIntervalSpec(every=timedelta(hours=10))]
             ),
-            state=ScheduleState(note="Getting top stories every hour."),
+            state=ScheduleState(note="Getting top stories every 10 hours."),
         ),
     )
 
@@ -303,7 +306,7 @@ Then in the [ScheduleSpec](https://python.temporal.io/temporalio.client.Schedule
 
 :::note
 
-Modify the interval timer from `hours=1` to `minutes=1` to see the Schedule Workflow execute faster.
+Modify the interval timer from `hours=10` to `minutes=1` to see the Schedule Workflow execute faster.
 
 :::
 

@@ -1,3 +1,4 @@
+# schedule_workflow.py
 import asyncio
 from datetime import timedelta
 
@@ -25,9 +26,9 @@ async def main():
                 task_queue=TASK_QUEUE_NAME,
             ),
             spec=ScheduleSpec(
-                intervals=[ScheduleIntervalSpec(every=timedelta(seconds=10))]
+                intervals=[ScheduleIntervalSpec(every=timedelta(hours=10))]
             ),
-            state=ScheduleState(note="Getting top stories 10 seconds."),
+            state=ScheduleState(note="Getting top stories every 10 minutes."),
         ),
     )
 

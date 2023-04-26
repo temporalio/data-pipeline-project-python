@@ -18,8 +18,8 @@ async def story_ids() -> list[int]:
         async with session.get(
             "https://hacker-news.firebaseio.com/v0/topstories.json"
         ) as response:
-            top_story_ids = await response.json()
-    return top_story_ids[:10]
+            story_ids = await response.json()
+    return story_ids[:10]
 
 
 @activity.defn
