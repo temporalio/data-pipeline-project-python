@@ -1,22 +1,31 @@
+# @@@SNIPSYNC data-pipeline-your-workflow-python
 # your_workflow.py
 from datetime import timedelta
+from typing import Any, List
 
 from temporalio import workflow
+from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
-    from activities import story_ids, top_stories
+    from activities import TemporalCommunityPosts, story_ids, top_stories
 
 
 @workflow.defn
-class HackerNewsWorkflow:
+class TemporalCommunityWorkflow:
     @workflow.run
-    async def run(self) -> list:
-        news_id = await workflow.execute_activity(
+    async def run(self) -> List[TemporalCommunityPosts]:
+        news_ids: List[str] = await workflow.execute_activity(
             story_ids,
             start_to_close_timeout=timedelta(seconds=15),
+            retry_policy=RetryPolicy(
+                non_retryable_error_types=["Exception"],
+            ),
         )
         return await workflow.execute_activity(
             top_stories,
-            news_id,
+            news_ids,
             start_to_close_timeout=timedelta(seconds=15),
         )
+
+
+# @@@SNIPEND

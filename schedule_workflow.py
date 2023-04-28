@@ -1,3 +1,4 @@
+# @@@SNIPSYNC data-pipeline-schedule-workflow-python
 # schedule_workflow.py
 import asyncio
 from datetime import timedelta
@@ -12,7 +13,7 @@ from temporalio.client import (
 )
 
 from activities import TASK_QUEUE_NAME
-from your_workflow import HackerNewsWorkflow
+from your_workflow import TemporalCommunityWorkflow
 
 
 async def main():
@@ -21,17 +22,18 @@ async def main():
         "workflow-schedule-id",
         Schedule(
             action=ScheduleActionStartWorkflow(
-                HackerNewsWorkflow.run,
-                id="hackernews-workflow",
+                TemporalCommunityWorkflow.run,
+                id="temporal-community-workflow",
                 task_queue=TASK_QUEUE_NAME,
             ),
             spec=ScheduleSpec(
                 intervals=[ScheduleIntervalSpec(every=timedelta(hours=10))]
             ),
-            state=ScheduleState(note="Getting top stories every 10 minutes."),
+            state=ScheduleState(note="Getting top stories every 10 hours."),
         ),
     )
 
 
 if __name__ == "__main__":
     asyncio.run(main())
+# @@@SNIPEND
