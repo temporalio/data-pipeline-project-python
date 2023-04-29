@@ -1,5 +1,4 @@
 # # @@@SNIPSYNC data-pipeline-delete-schedule-python
-# delete_schedule.py
 import asyncio
 
 from temporalio.client import Client

@@ -35,7 +35,7 @@ from datetime import timedelta
 from temporalio import workflow
 
 with workflow.unsafe.imports_passed_through():
-    from activities import story_ids, top_stories
+    from activities import post_ids, top_posts
 
 
 @workflow.defn
@@ -43,11 +43,11 @@ class HackerNewsWorkflow:
     @workflow.run
     async def run(self) -> list:
         news_id = await workflow.execute_activity(
-            story_ids,
+            post_ids,
             start_to_close_timeout=timedelta(seconds=15),
         )
         return await workflow.execute_activity(
-            top_stories,
+            top_posts,
             news_id,
             start_to_close_timeout=timedelta(seconds=15),
         )
@@ -57,7 +57,7 @@ The `HackerNewsWorkflow` class is decorated with the `@workflow.defn` which must
 
 The `async def run()` function is decorated with the `@workflow.run` which is set on the one asynchronous method on the same class as the `@workflow.defn`.
 
-There are two Activities being executed, `hackernews_top_story_ids` and `hackernews_top_stories`.
+There are two Activities being executed, `hackernews_top_post_ids` and `hackernews_top_posts`.
 These Activities are defined in the `activities.py` file, which will be explained later.
 
 Inside the `workflow.execute_activity()` function, pass the reference of Activity Definition, function, or step in your data pipeline.
@@ -74,7 +74,7 @@ The Workflow will handle the execution of each step.
 
 In the `activities.py` file, write out each step in the data processing pipeline.
 
-For example, `story_ids()` gets the top 10 stories from Hacker News while, `top_stories()` gets items based on the stories ID.
+For example, `post_ids()` gets the top 10 stories from Hacker News while, `top_posts()` gets items based on the stories ID.
 
 Use the `aiohttp` library instead of `requests` to avoid making blocking calls.
 
@@ -95,20 +95,20 @@ async def fetch(session, url):
 
 
 @activity.defn
-async def story_ids() -> list[int]:
+async def post_ids() -> list[int]:
     async with aiohttp.ClientSession() as session:
         async with session.get(
             "https://hacker-news.firebaseio.com/v0/topstories.json"
         ) as response:
-            top_story_ids = await response.json()
-    return top_story_ids[:10]
+            top_post_ids = await response.json()
+    return top_post_ids[:10]
 
 
 @activity.defn
-async def top_stories(story_ids) -> list[list[str]]:
+async def top_posts(post_ids) -> list[list[str]]:
     results = []
     async with aiohttp.ClientSession() as session:
-        for item_id in story_ids:
+        for item_id in post_ids:
             try:
                 item = await fetch(
                     session,
@@ -147,7 +147,7 @@ import asyncio
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from activities import TASK_QUEUE_NAME, hackernews_top_stories, hackernews_top_story_ids
+from activities import TASK_QUEUE_NAME, hackernews_top_posts, hackernews_top_post_ids
 from your_workflow import HackerNewsWorkflow
 
 
@@ -157,7 +157,7 @@ async def main():
         client,
         task_queue=TASK_QUEUE_NAME,
         workflows=[HackerNewsWorkflow],
-        activities=[hackernews_top_stories, hackernews_top_story_ids],
+        activities=[hackernews_top_posts, hackernews_top_post_ids],
     )
     await worker.run()
 

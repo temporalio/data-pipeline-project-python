@@ -1,11 +1,10 @@
 # @@@SNIPSYNC data-pipeline-run-worker-python
-# run_worker.py
 import asyncio
 
 from temporalio.client import Client
 from temporalio.worker import Worker
 
-from activities import TASK_QUEUE_NAME, story_ids, top_stories
+from activities import TASK_QUEUE_NAME, post_ids, top_posts
 from your_workflow import TemporalCommunityWorkflow
 
 
@@ -15,7 +14,7 @@ async def main():
         client,
         task_queue=TASK_QUEUE_NAME,
         workflows=[TemporalCommunityWorkflow],
-        activities=[top_stories, story_ids],
+        activities=[top_posts, post_ids],
     )
     await worker.run()
 

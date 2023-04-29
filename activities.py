@@ -1,5 +1,4 @@
 # @@@SNIPSTART data-pipeline-activity-python
-# activities.py
 from dataclasses import dataclass
 from typing import Any, List
 
@@ -22,21 +21,21 @@ async def fetch(session: aiohttp.ClientSession, url: str) -> dict:
 
 
 @activity.defn
-async def story_ids() -> List[str]:
+async def post_ids() -> List[str]:
     async with aiohttp.ClientSession() as session:
         async with session.get("https://community.temporal.io/latest.json") as response:
             if response.status != 200:
                 raise Exception(f"Failed to fetch top stories: {response.status}")
-            story_ids = await response.json()
+            post_ids = await response.json()
 
-    return [str(topic["id"]) for topic in story_ids["topic_list"]["topics"]]
+    return [str(topic["id"]) for topic in post_ids["topic_list"]["topics"]]
 
 
 @activity.defn
-async def top_stories(story_ids: List[Any]) -> List[TemporalCommunityPosts]:
+async def top_posts(post_ids: List[Any]) -> List[TemporalCommunityPosts]:
     results = []
     async with aiohttp.ClientSession() as session:
-        for item_id in story_ids:
+        for item_id in post_ids:
             try:
                 async with session.get(
                     f"https://community.temporal.io/t/{item_id}.json"

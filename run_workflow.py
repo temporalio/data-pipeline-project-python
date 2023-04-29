@@ -1,5 +1,4 @@
 # @@@SNIPSYNC data-pipeline-run-workflow-python
-# run_workflow.py
 import asyncio
 
 import pandas as pd
