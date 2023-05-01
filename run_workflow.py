@@ -9,7 +9,6 @@ from your_workflow import TemporalCommunityWorkflow
 
 
 async def main():
-
     client = await Client.connect("localhost:7233")
 
     stories = await client.execute_workflow(
