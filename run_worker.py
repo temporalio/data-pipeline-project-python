@@ -1,4 +1,4 @@
-# @@@SNIPSYNC data-pipeline-run-worker-python
+# @@@SNIPSTART data-pipeline-run-worker-python
 import asyncio
 
 from temporalio.client import Client

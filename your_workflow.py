@@ -1,4 +1,4 @@
-# @@@SNIPSYNC data-pipeline-your-workflow-python
+# @@@SNIPSTART data-pipeline-your-workflow-python
 from datetime import timedelta
 from typing import Any, List
 

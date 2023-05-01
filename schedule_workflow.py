@@ -1,4 +1,4 @@
-# @@@SNIPSYNC data-pipeline-schedule-workflow-python
+# @@@SNIPSTART data-pipeline-schedule-workflow-python
 import asyncio
 from datetime import timedelta
 
