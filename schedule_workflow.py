@@ -28,7 +28,6 @@ async def main():
             spec=ScheduleSpec(
                 intervals=[ScheduleIntervalSpec(every=timedelta(hours=10))]
             ),
-            state=ScheduleState(note="Getting top stories every 10 hours."),
         ),
     )
 
