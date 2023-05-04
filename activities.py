@@ -35,7 +35,7 @@ async def top_posts(post_ids: List[str]) -> List[TemporalCommunityPost]:
                 f"https://community.temporal.io/t/{item_id}.json"
             ) as response:
                 if response.status < 200 or response.status >= 300:
-                    print(f"Failed to fetch post {item_id}: {response.status}")
+                    raise RuntimeError(f"Status: {response.status}")
                 item = await response.json()
                 slug = item["slug"]
                 url = f"https://community.temporal.io/t/{slug}/{item_id}"

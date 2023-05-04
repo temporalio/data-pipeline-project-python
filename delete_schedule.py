@@ -7,7 +7,7 @@ from temporalio.client import Client
 async def main():
     client = await Client.connect("localhost:7233")
     handle = client.get_schedule_handle(
-        "workflow-schedule-id",
+        "top-stories-every-10-hours",
     )
 
     await handle.delete()

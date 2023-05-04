@@ -18,7 +18,7 @@ from your_workflow import TemporalCommunityWorkflow
 async def main():
     client = await Client.connect("localhost:7233")
     await client.create_schedule(
-        "workflow-schedule-id",
+        "top-stories-every-10-hours",
         Schedule(
             action=ScheduleActionStartWorkflow(
                 TemporalCommunityWorkflow.run,
