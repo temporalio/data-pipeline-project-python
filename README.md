@@ -1,5 +1,7 @@
 # Build a data pipeline Workflow with Temporal and Python
 
+For the complete tutorial, see [Build a data pipeline Workflow with Temporal and Python](https://learn.temporal.io/tutorials/python/data-pipelines/).
+
 Temporal makes writing data pipelines easy with Workflows and Activities.
 
 You can create a source, process the step or steps, and output the flow of information to a destination with just code. Meaning all of your developer best practices can be implemented, tested, and ran as needed.
@@ -24,7 +26,7 @@ With this repository cloned, run the following at the root of the directory:
 poetry install
 ```
 
-# Start the Workflow
+## Start the Workflow
 
 Start and run the Workflow with the following commands:
 
@@ -41,3 +43,26 @@ Terminate the Workflow with the following command:
 # terminal three
 temporal workflow terminate --workflow-id temporal-community-workflow
 ```
+
+## Results
+
+You'll see an output similar to the following in your terminal::
+
+```command
+Top 10 stories on Temporal Community:
+                                               Title                                                URL  Views
+0  Unable to run the temporal examples against th...  https://community.temporal.io/t/unable-to-run-...   2370
+1                   Welcome to community.temporal.io  https://community.temporal.io/t/welcome-to-com...    915
+2  Testing an activity implementation when using ...  https://community.temporal.io/t/testing-an-act...    633
+3      Separate Workers for Workflows and Activities  https://community.temporal.io/t/separate-worke...    423
+4  What is the hardware prerequisite for installi...  https://community.temporal.io/t/what-is-the-ha...    169
+5  Worker TLS errors - "first record does not loo...  https://community.temporal.io/t/worker-tls-err...    148
+6  Temporal in lieu of a queuing solution, say SQ...  https://community.temporal.io/t/temporal-in-li...    146
+7  Implement Finite State Machine Transitioning i...  https://community.temporal.io/t/implement-fini...     97
+8         Cassandra history_node table keeps growing  https://community.temporal.io/t/cassandra-hist...     91
+9  Getting error TransportError (InvalidCertifica...  https://community.temporal.io/t/getting-error-...     74
+```
+
+You'll see an output similar to the following in the Temporal Web UI:
+
+![Temporal Web UI](./images/temporal-web-ui.png)
