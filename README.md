@@ -1,5 +1,7 @@
 # Build a data pipeline Workflow with Temporal and Python
 
+For the complete tutorial, see [Build a data pipeline Workflow with Temporal and Python](https://learn.temporal.io/tutorials/python/data-pipelines/).
+
 Temporal makes writing data pipelines easy with Workflows and Activities.
 
 You can create a source, process the step or steps, and output the flow of information to a destination with just code. Meaning all of your developer best practices can be implemented, tested, and ran as needed.
